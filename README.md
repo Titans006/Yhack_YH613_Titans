@@ -25,7 +25,7 @@ for controlling a robotic device wirelessly.
 - index finger alone tilt left control
 - wrist and middle finger is tilt upward\downward then forward right curve\reverse right curve
 - wrist and index finger is tilt upward\downward then forward left curve\reverse letft curve
-- incase of both index and middle finger is tilted upwards then it stays in rest position
+- incase of both index and middle finger being simultaneously tilted upwards then it stays in rest position
 - Speed control
 - Deadman safety mechanism
 - Wireless communication
