@@ -7,15 +7,25 @@ for controlling a robotic device wirelessly.
 
 ## Hardware(robot)
 - Arduino uno
-- MPU6050
-- 3 Flex Sensors
 - nRF24L01
 - L298N
 - DC Motors
-
+- relay
+- mist maker
+- flame sensor
+## Hardware(gloves)
+- MPU6050
+- 3 Flex Sensors
+- nRF24L01
+- Arduino nano
 ## Features
-- Forward / Reverse control
-- Left / Right control
+- TILT UPWARD Forward control
+- TILT DOWNWARD Reverse control
+- middle finger alone tilt right control
+- index finger alone tilt left control
+- wrist and middle finger is tilt upward\downward then forward right curve\reverse right curve
+- wrist and index finger is tilt upward\downward then forward left curve\reverse letft curve
+- incase of both index and middle finger is tilted upwards then it stays in rest position
 - Speed control
 - Deadman safety mechanism
 - Wireless communication
