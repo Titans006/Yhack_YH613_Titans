@@ -1,0 +1,19 @@
+PROBLEM STATEMENT:
+
+Conventional robot control requires a keyboard, mouse or physical controller. 
+These interfaces are inconvenient in certain operating environments. 
+A wearable and intuitive control interface is needed. 
+Hand movements can be converted into predefined robotic commands. 
+The system should provide wireless, responsive and low-cost control. 
+Fire-response robots can be a practical application of this technology.
+
+
+SOLUTION:
+
+Develop a sensor-equipped wearable glove. 
+Capture hand movements using motion/gesture sensors. 
+Recognize predefined hand gestures. 
+Convert recognized gestures into control commands. 
+Transmit commands wirelessly using Wi-Fi. 
+Control a mobile robot based on the received commands. 
+Integrate flame detection and mist-based fire suppression.

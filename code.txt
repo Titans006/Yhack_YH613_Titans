@@ -1,0 +1,188 @@
+// ============================================================
+// Combined System: L298N Motor Driver (NRF24 glove control)
+//                  + Mist Maker Relay (Flame detection)
+//                  + IR Flame Sensor
+//                  + NRF24L01 Receiver (glove transmitter)
+// ============================================================
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+// ---------- L298N Motor Driver Pins ----------
+#define ENA 9    // PWM speed - Motor A (Left)
+#define IN1 8
+#define IN2 7
+
+#define ENB 3    // PWM speed - Motor B (Right)
+#define IN3 5
+#define IN4 4
+
+int motorSpeed = 200;  // 0-255
+
+// ---------- Relay + Mist Maker ----------
+#define RELAY_PIN 6
+#define RELAY_ACTIVE_LOW true   // most relay modules: LOW = ON
+
+// ---------- IR Flame Sensor ----------
+#define FLAME_PIN 2
+#define FLAME_ACTIVE_LOW true   // most flame sensor modules: LOW = flame detected
+
+// ---------- NRF24L01 (Receiver) ----------
+#define CE_PIN  A0
+#define CSN_PIN A1
+RF24 radio(CE_PIN, CSN_PIN);
+const byte address[6] = "00001";   // must match glove transmitter's address
+
+// Command payload from glove transmitter.
+// Assumption: single char command. Change this struct if your glove
+// sends something richer (e.g. flex-sensor values / accelerometer data).
+char command = 'S';   // default = Stop
+unsigned long lastCommandTime = 0;
+const unsigned long commandTimeout = 500; // ms - fail-safe stop if signal lost
+
+// ---------- Flame Monitoring ----------
+bool flameDetected = false;
+bool lastFlameDetected = false;
+
+void setup() {
+  Serial.begin(9600);
+
+  // Motor pins
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  stopMotors();
+
+  // Relay pin
+  pinMode(RELAY_PIN, OUTPUT);
+  relayOff();
+
+  // Flame sensor pin
+  pinMode(FLAME_PIN, INPUT);
+
+  // NRF24 radio init
+  if (!radio.begin()) {
+    Serial.println("[ERROR] NRF24L01 not detected - check wiring!");
+  }
+  radio.openReadingPipe(0, address);
+  radio.setPALevel(RF24_PA_LOW);   // raise to HIGH once range is confirmed
+  radio.setDataRate(RF24_250KBPS);
+  radio.startListening();
+
+  Serial.println("=====================================");
+  Serial.println(" System Start: Glove-Controlled Rover ");
+  Serial.println(" + Mist Maker (Flame) + NRF24         ");
+  Serial.println("=====================================");
+
+  lastCommandTime = millis();
+}
+
+void loop() {
+  checkFlameSensor();
+  receiveGloveCommand();
+  handleMotorCommand();
+}
+
+// ---------------- NRF24 Receive Logic ----------------
+void receiveGloveCommand() {
+  if (radio.available()) {
+    radio.read(&command, sizeof(command));
+    lastCommandTime = millis();
+  }
+
+  // Fail-safe: if no packet received recently, stop the motors
+  if (millis() - lastCommandTime > commandTimeout) {
+    command = 'S';
+  }
+}
+
+// ---------------- Motor Command Logic ----------------
+void handleMotorCommand() {
+  switch (command) {
+    case 'F': moveForward();  break;
+    case 'B': moveBackward(); break;
+    case 'L': turnLeft();     break;
+    case 'R': turnRight();    break;
+    case 'S':
+    default:  stopMotors();   break;
+  }
+}
+
+// ---------------- Flame Sensor Logic ----------------
+void checkFlameSensor() {
+  int rawValue = digitalRead(FLAME_PIN);
+  flameDetected = FLAME_ACTIVE_LOW ? (rawValue == LOW) : (rawValue == HIGH);
+
+  // Only print + act when status changes (avoids flooding serial monitor)
+  if (flameDetected != lastFlameDetected) {
+    if (flameDetected) {
+      Serial.println();
+      Serial.println("[ALERT] Flame Detected! -> Mist Maker: ON");
+      relayOn();
+    } else {
+      Serial.println();
+      Serial.println("[INFO] No Flame Detected -> Mist Maker: OFF");
+      relayOff();
+    }
+    lastFlameDetected = flameDetected;
+  }
+}
+
+// ---------------- Motor Control Functions ----------------
+void moveForward() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void moveBackward() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void turnLeft() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void turnRight() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void stopMotors() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+// ---------------- Relay Control Functions ----------------
+void relayOn() {
+  digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? LOW : HIGH);
+}
+
+void relayOff() {
+  digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? HIGH : LOW);
+}

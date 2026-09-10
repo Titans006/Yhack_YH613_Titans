@@ -1,0 +1,97 @@
+// L298N Motor Driver Test Code
+// Motor A (Left) and Motor B (Right)
+
+#define ENA 9    // PWM speed control - Motor A
+#define IN1 8
+#define IN2 7
+
+#define ENB 3    // PWM speed control - Motor B
+#define IN3 5
+#define IN4 4
+
+int motorSpeed = 200;  // 0-255
+
+void setup() {
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  stopMotors();
+}
+
+void loop() {
+  moveForward();
+  delay(10000);
+
+  stopMotors();
+  delay(500);
+
+  moveBackward();
+  delay(10000);
+
+  stopMotors();
+  delay(500);
+
+  turnLeft();
+  delay(10000);
+
+  stopMotors();
+  delay(500);
+
+  turnRight();
+  delay(10000);
+
+  stopMotors();
+  delay(5000); // pause before repeating the cycle
+}
+
+void moveForward() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void moveBackward() {
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void turnLeft() {
+  // Left motor backward, right motor forward (spin in place)
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void turnRight() {
+  // Left motor forward, right motor backward (spin in place)
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}

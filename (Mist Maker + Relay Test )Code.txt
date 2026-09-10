@@ -1,0 +1,55 @@
+// ============================================
+// Flame Sensor + Relay Module Test Code
+// Relay turns ON when flame is detected
+// ============================================
+
+#define RELAY_PIN 7        // Relay IN pin
+#define FLAME_PIN 2        // Flame sensor digital OUT pin
+
+#define RELAY_ACTIVE_LOW true   // Most relay modules: LOW = ON
+#define FLAME_ACTIVE_LOW true   // Most flame sensor modules: LOW = flame detected
+
+bool flameDetected = false;
+bool lastFlameDetected = false;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(RELAY_PIN, OUTPUT);
+  pinMode(FLAME_PIN, INPUT);
+
+  relayOff(); // start with relay off
+
+  Serial.println("=====================================");
+  Serial.println("   Flame Sensor + Relay Test Start");
+  Serial.println("=====================================");
+}
+
+void loop() {
+  checkFlameSensor();
+}
+
+void checkFlameSensor() {
+  int rawValue = digitalRead(FLAME_PIN);
+  flameDetected = FLAME_ACTIVE_LOW ? (rawValue == LOW) : (rawValue == HIGH);
+
+  // Only print/act on state change (keeps serial monitor clean)
+  if (flameDetected != lastFlameDetected) {
+    if (flameDetected) {
+      Serial.println("[ALERT] Flame Detected! -> Relay: ON");
+      relayOn();
+    } else {
+      Serial.println("[INFO] No Flame -> Relay: OFF");
+      relayOff();
+    }
+    lastFlameDetected = flameDetected;
+  }
+}
+
+void relayOn() {
+  digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? LOW : HIGH);
+}
+
+void relayOff() {
+  digitalWrite(RELAY_PIN, RELAY_ACTIVE_LOW ? HIGH : LOW);
+}
